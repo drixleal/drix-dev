@@ -120,7 +120,7 @@ section {
 
 h1,
 h2 {
-  color: #535353;
+  color: #525252;
 }
 h3 {
   color: #363053;
@@ -164,12 +164,12 @@ h2 {
 }
 
 .skill-card {
-  background-color: black;
+  background-color: rgb(0, 0, 2550);
   border-radius: 10px;
   padding: 20px;
   text-align: center;
   width: 120px;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 5);
   transition: transform 0.3s;
 }
 
