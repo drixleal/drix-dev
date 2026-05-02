@@ -1,0 +1,213 @@
+! -----------------Catalyst-3560G-----------------
+! 1. CONFIGURAÇÕES GERAIS E IDENTIDADE
+! ------------------------------------------------
+enable
+configure terminal
+hostname SW
+ip domain-name abc.xyz
+
+clock timezone AMT -x
+
+! Sincronização de Tempo NTP.br
+ntp server 200.160.7.186
+ntp server 201.49.148.135
+
+! Criptografia e Logs
+service password-encryption
+service timestamps log datetime msec
+logging buffered 0 
+no ip domain-lookup
+
+! Desativando os Serviços de Descobertas de equipamentos na rede (Segurança Global)
+no cdp run
+no lldp run
+
+! *** ATENÇÃO: Altere as senhas antes de aplicar ***
+enable secret minha_senha1
+username meu_usuario privilege 15 secret minha_senha2
+
+! ------------------------------------------------
+! GERAÇÃO DE CHAVES E ACESSO REMOTO (SSH)
+! ------------------------------------------------
+! 1. Gera a chave criptográfica primeiro (Obrigatório)
+crypto key generate rsa 
+!Responda com;
+2048
+! 2. Agora sim, aplica as regras do SSH
+ip ssh version 0
+ip ssh time-out 00
+no ip http server
+no ip http secure-server
+
+! ------------------------------------------------
+! MENSAGEM DO DIA (MOTD)
+! ------------------------------------------------
+banner motd @
+======================================================
+   $$$$$$   $$$$$$   $$    $$
+   $$   $$      $$   $$$  $$$
+   $$   $$  $$$$$$   $$ $$ $$
+   $$   $$  $$       $$    $$
+   $$$$$$   $$$$$$   $$    $$
+
+   ACESSO RESTRITO! APENAS AUTORIZADOS!
+======================================================
+@
+
+! ------------------------------------------------
+! 2. CRIAÇÃO DO BANCO DE DADOS DE VLANS
+! ------------------------------------------------
+vlan xx
+ name SERVERS
+vlan xx
+ name SUPORTE
+vlan xx
+ name VENDAS
+vlan xx
+ name ADM
+vlan xx
+ name IOT
+vlan xx
+ name TIME_GUEST
+vlan xxx
+ name BLACKHOLE_NATIVA
+
+! ------------------------------------------------
+! 3. UPLINKS PARA O FIREWALL (TRUNK + BACKUP)
+! ------------------------------------------------
+interface GigabitEthernet0/x
+ description UPLINK-PFSENSE-PRIMARIO
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan xx
+ switchport trunk allowed vlan xx,xx,xx,xx,xx,xx
+ spanning-tree portfast trunk
+
+interface GigabitEthernet0/x
+ description UPLINK-PFSENSE-BACKUP
+ switchport trunk encapsulation dot1q
+ switchport mode trunk
+ switchport trunk native vlan xxx
+ switchport trunk allowed vlan xx,xx,xx,xx,xx,xx
+ spanning-tree portfast trunk
+
+! ------------------------------------------------
+! 4. PORTAS DE ACESSO (USUÁRIOS E REDES)
+! ------------------------------------------------
+interface range GigabitEthernet0/x - x
+ description VENDAS-D2M
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+interface GigabitEthernet0/x
+ description SUPORTE-D2M
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+interface GigabitEthernet0/x
+ description ADM-D2M
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+interface GigabitEthernet0/x
+ description P2P-TIME_GUEST-D2M
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+interface GigabitEthernet0/x
+ description P2P-IOT-D2M
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast 
+
+interface range GigabitEthernet0/x - x
+ description SERVERS-STANDALONE
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+! ------------------------------------------------
+! 5. LACP PARA O SERVIDOR PROXMOX
+! ------------------------------------------------
+interface range GigabitEthernet0/x - x
+ description LINK-FISICO-PROXMOX
+ shutdown
+ switchport mode access
+ switchport access vlan xx
+ channel-group 1 mode active
+ channel-protocol lacp
+ no shutdown
+
+interface Port-channel x
+ description LACP-PROXMOX-2GBPS
+ switchport mode access
+ switchport access vlan xx
+ spanning-tree portfast
+
+! ------------------------------------------------
+! 6. ISOLAMENTO DE PORTAS NÃO UTILIZADAS (SEGURANÇA)
+! ------------------------------------------------
+interface range GigabitEthernet0/x - x, GigabitEthernet0/x - x
+ description PORTAS-INATIVAS
+ switchport mode access
+ switchport access vlan xxx
+ shutdown
+
+! ------------------------------------------------
+! 7. GERÊNCIA DO SWITCH
+! ------------------------------------------------
+interface Vlan1
+ no ip address
+ shutdown
+
+interface vlan xx
+ description IP_GERENCIA_SW-D2M
+ ip address x.x.x.x x.x.x.x
+ no shutdown
+ exit
+
+ip default-gateway x.x.x.x
+
+! ------------------------------------------------
+! 8. ACESSO REMOTO E CONSOLE CONSOLIDADOS
+! ------------------------------------------------
+
+line console 0
+ login local
+ logging synchronous
+ exec-timeout 5 0
+exit
+line vty 0 4
+ login local
+ transport input ssh
+ exec-timeout 5 0
+exit
+line vty 5 15
+ login local
+ transport input ssh
+ exec-timeout 2 0
+exit
+
+end
+
+wr m
+
+! ------------------------------------------------
+! 9. CONFIGURAR SNMP (OPCIONAL, MAS RECOMENDADO PARA MONITORAMENTO)
+! ------------------------------------------------
+configure terminal
+
+! Habilita a comunidade SNMP com permissão de Somente Leitura (RO - Read Only)
+snmp-server community xxxxxx RO
+
+! (Opcional) Adiciona informações de contato e localização que aparecem no Zabbix
+snmp-server location xxxx-xxxxx
+snmp-server contact admin@dxxxxxxx
+
+! Salva as configurações na NVRAM
+end
+write memory

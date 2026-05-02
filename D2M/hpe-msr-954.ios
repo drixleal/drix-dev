@@ -1,0 +1,85 @@
+!Entrar no modo de configuração
+system-view
+
+! 1. Criar a VLAN compartilhada e atribuir o IP do Gateway
+vlan 0
+ description LAN_INTERFACE
+ quit
+
+interface Vlan-interface 0
+ description GATEWAY
+ ip address 192.168.0.0 255.255.0.0
+ quit
+
+! 2. Configurar as portas físicas LAN como Switch (Access) na VLAN 0
+interface range GigabitEthernet 0/x to GigabitEthernet 0/x
+ port link-mode bridge
+ port link-type access
+ port access vlan 0
+ quit
+
+! 3. Configurar a regra de permissão para o PPPoE
+dialer-group 0 rule ip permit
+
+! 4. Criar a interface virtual Dialer para a autenticação no Provedor
+interface Dialer 0
+ description LINK_PPPOE_WAN
+ dialer bundle enable
+ dialer-group 0
+ dialer timer idle 0
+ dialer timer autodial 60
+ ppp chap user isp_user
+ ppp chap password simple x0x0x0x0
+ ppp pap local-user servicos_digital password simple x0x0x0x0
+ ip address ppp-negotiate
+ nat outbound
+ quit
+
+! 5. Vincular o Dialer à interface física conectada ao modem
+interface GigabitEthernet 0/x
+ port link-mode route
+ pppoe-client dial-bundle-number 0
+ quit
+
+! 6. Criar a rota estática padrão apontando para a internet
+ip route-static 0.0.0.0 0.0.0.0 Dialer 0
+
+! 7. Configurar o Servidor DHCP (Para o switch do Dieslei e/ou pfSense)
+dhcp enable
+dhcp server ip-pool LAN_POOL
+ network 192.168.0.0 mask 255.255.0.0
+ gateway-list 192.168.0.0
+ dns-list 0.0.0.0 0.0.0.0
+ address range 192.168.0.0 192.168.0.0
+
+! Você pode usar o comando de exclusão global (fora do pool)
+quit
+
+ dhcp server forbidden-ip 192.168.0.0 192.168.0.0
+
+ quit
+
+! Voltar ao modo principal e salvar as configurações na memória NVRAM
+return
+save force
+
+
+
+! Entrar no modo de configuração
+system-view
+
+! Acessar o pool de DHCP que criamos
+dhcp server ip-pool LAN_POOL
+
+! Define o intervalo (start e end) de distribuição
+address range 192.168.0.0 192.168.0.0
+
+! (Opcional) Caso você queira garantir que os IPs de .1 a .14 nunca sejam tocados pelo DHCP
+! Você pode usar o comando de exclusão global (fora do pool)
+quit
+
+dhcp server forbidden-ip 192.168.0.0 192.168.0.0
+
+! Salvar a configuração
+return
+save force
