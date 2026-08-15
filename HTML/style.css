@@ -21,7 +21,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  background-color: #333;
+  background-color: #333333;
   color: rgb(255, 255, 255);
   padding: 10px 40px;
   position: sticky;
@@ -120,7 +120,7 @@ section {
 
 h1,
 h2 {
-  color: #525252;
+  color: #a8a8a8;
 }
 h3 {
   color: #363053;
