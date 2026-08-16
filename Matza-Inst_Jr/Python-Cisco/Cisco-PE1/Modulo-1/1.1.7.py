@@ -13,7 +13,7 @@ print("--- Verificador de Ambiente Python ---")
 nome_do_sistema = platform.system()
 
 # Passo 3: Exibimos o resultado na tela.
-print(f"Sucesso Este script foi interpretado e está rodando em um sistema: {nome_do_sistema}")
+print(f"Sucesso! Este script foi interpretado e está rodando em um sistema: {nome_do_sistema}")
 
 # Passo 4 (Extra): Vamos ser um pouco mais curiosos e pedir a versão do sistema.
 verao_do_sistema = platform.release()
