@@ -5,7 +5,7 @@
 import platform
 
 # Exibindo um cabeçalho simples para organizar a saída
-print("--- Verificador de Ambiente Python ---")
+print("\n--- Verificador de Ambiente Python ---\n")
 
 # Passo 2: Usamos a função 'platform.system()' para descobrir o nome do sistema operacional.
 # O interpretador Python fará o trabalho de traduzir isso para a linguagem da sua máquina.
@@ -13,8 +13,8 @@ print("--- Verificador de Ambiente Python ---")
 nome_do_sistema = platform.system()
 
 # Passo 3: Exibimos o resultado na tela.
-print(f"Sucesso! Este script foi interpretado e está rodando em um sistema: {nome_do_sistema}")
+print(f"Sucesso! \nEste script foi interpretado e está rodando em um sistema: {nome_do_sistema}")
 
 # Passo 4 (Extra): Vamos ser um pouco mais curiosos e pedir a versão do sistema.
 verao_do_sistema = platform.release()
-print(f"A versão detalhada desta máquina é: {verao_do_sistema}")
+print(f"\nA versão detalhada desta máquina é: {verao_do_sistema}\n")
